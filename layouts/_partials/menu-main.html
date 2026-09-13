@@ -1,0 +1,64 @@
+{{- $page := .page -}}
+{{- $mobile := .mobile -}}
+{{- range $page.Site.Menus.main -}}
+    {{- $url := .URL | relLangURL -}}
+    {{- with .Page -}}
+        {{- $url = .RelPermalink -}}
+    {{- end -}}
+    {{- $subPages := slice -}}
+    {{- $sectionPage := .Page -}}
+    {{- if not $sectionPage -}}
+        {{- $sectionPage = site.GetPage .Identifier -}}
+    {{- end -}}
+    {{- if and $sectionPage $sectionPage.IsSection -}}
+        {{- $subPages = $sectionPage.RegularPages.ByWeight -}}
+    {{- end -}}
+    {{- $hasSubmenu := or .HasChildren (gt (len $subPages) 0) -}}
+    {{- $isActive := $page.IsMenuCurrent `main` . | or ($page.HasMenuCurrent `main` .) | or (eq $page.RelPermalink $url) -}}
+    {{- if not $isActive -}}
+        {{- range $subPages -}}
+            {{- if eq $page.RelPermalink .RelPermalink -}}
+                {{- $isActive = true -}}
+            {{- end -}}
+        {{- end -}}
+    {{- end -}}
+    {{- if $hasSubmenu -}}
+        <span class="menu-item has-children">
+            <a class="{{ if $isActive }}active{{ end }}" href="{{ $url }}"{{ with .Title }} title="{{ . }}"{{ end }}{{ if (urls.Parse $url).Host }} rel="noopener noreffer" target="_blank"{{ end }} aria-haspopup="true">
+                {{- if $mobile -}}
+                    {{- .Pre | safeHTML }}{{ .Name }}{{ .Post | safeHTML -}}
+                {{- else -}}
+                    {{- .Pre | safeHTML }} {{ .Name }} {{ .Post | safeHTML -}}
+                {{- end -}}
+                <i class="fas fa-chevron-down fa-xs submenu-icon" aria-hidden="true"></i>
+            </a>
+            <span class="submenu">
+                {{- if gt (len $subPages) 0 -}}
+                    {{- range $subPages -}}
+                        <a class="submenu-item{{ if eq $page.RelPermalink .RelPermalink }} active{{ end }}" href="{{ .RelPermalink }}" title="{{ .Title }}">
+                            {{- .Title -}}
+                        </a>
+                    {{- end -}}
+                {{- else -}}
+                    {{- range .Children -}}
+                        {{- $childURL := .URL | relLangURL -}}
+                        {{- with .Page -}}
+                            {{- $childURL = .RelPermalink -}}
+                        {{- end -}}
+                        <a class="submenu-item{{ if $page.IsMenuCurrent `main` . | or (eq $page.RelPermalink $childURL) }} active{{ end }}" href="{{ $childURL }}"{{ with .Title }} title="{{ . }}"{{ end }}{{ if (urls.Parse $childURL).Host }} rel="noopener noreffer" target="_blank"{{ end }}>
+                            {{- .Name -}}
+                        </a>
+                    {{- end -}}
+                {{- end -}}
+            </span>
+        </span>
+    {{- else -}}
+        <a class="menu-item{{ if $isActive }} active{{ end }}" href="{{ $url }}"{{ with .Title }} title="{{ . }}"{{ end }}{{ if (urls.Parse $url).Host }} rel="noopener noreffer" target="_blank"{{ end }}>
+            {{- if $mobile -}}
+                {{- .Pre | safeHTML }}{{ .Name }}{{ .Post | safeHTML -}}
+            {{- else -}}
+                {{- .Pre | safeHTML }} {{ .Name }} {{ .Post | safeHTML -}}
+            {{- end -}}
+        </a>
+    {{- end -}}
+{{- end -}}
